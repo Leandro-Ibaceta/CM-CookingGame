@@ -1,13 +1,31 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 public class Player : MonoBehaviour
 {
     [SerializeField]GameInput gameInput;
+    [SerializeField] LayerMask layerMask;
+
     private float moveSpeed = 7f;
     private bool isWalking;
     private Vector3 lastInteractDirection;
+    private ClearCounter selectedCounter;
+
+    private void Start()
+    {
+        gameInput.OnInteractAction += GameInput_OnInteractAction;
+    }
+
+    private void GameInput_OnInteractAction(object sender, System.EventArgs e)
+    {
+        if(selectedCounter != null)
+        {
+            selectedCounter.Interact();
+        }
+    }
+
     // Update is called once per frame
     void Update()
     {
@@ -23,10 +41,26 @@ public class Player : MonoBehaviour
             lastInteractDirection = moveDir;
 
         float interactDistance = 2f;
-        if(Physics.Raycast(transform.position, lastInteractDirection,interactDistance))
+        if(Physics.Raycast(transform.position, lastInteractDirection,out RaycastHit raycastHit, interactDistance , layerMask))
         {
-            Debug.Log("Touch something");
+            if (raycastHit.transform.TryGetComponent(out ClearCounter clearCounter))
+            { 
+                if(clearCounter != selectedCounter)
+                {
+                    selectedCounter = clearCounter;
+                }
+            }
+            else
+            {
+                selectedCounter = null;
+            }
         }
+        else
+        {
+            selectedCounter = null;
+        }
+
+        Debug.Log(selectedCounter);
     }
 
     private void MoveCharacter()
